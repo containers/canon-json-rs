@@ -569,14 +569,13 @@ mod tests {
         );
     }
 
-    // #[test]
-    // #[ignore = "need to debug number formatting"]
-    // fn test_values() {
-    //     verify(
-    //         include_str!("../testdata/input/values.json"),
-    //         include_str!("../testdata/output/values.json"),
-    //     );
-    // }
+    #[test]
+    fn test_values() {
+        verify(
+            include_str!("../testdata/input/values.json"),
+            include_str!("../testdata/output/values.json"),
+        );
+    }
 
     #[test]
     fn test_weird() {
