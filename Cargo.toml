@@ -1,11 +1,9 @@
 [package]
-name        = "cjson"
-version     = "0.1.2"
-authors     = ["Radu M <root@radu.sh>"]
+name        = "canon-json"
+version     = "0.2.0"
 edition     = "2018"
 description = "Canonical JSON serializer"
 license     = "MIT"
-readme      = "readme.md"
 
 [dependencies]
 itoa         = "0.4.3"

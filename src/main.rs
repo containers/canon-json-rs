@@ -1,4 +1,4 @@
-extern crate cjson;
+extern crate canon_json;
 extern crate serde_json;
 
 use std::{env, fs, path};
@@ -12,6 +12,6 @@ fn main() {
 
     println!(
         "{}",
-        cjson::to_string(&res).expect("cannot write canonical JSON")
+        canon_json::to_string(&res).expect("cannot write canonical JSON")
     );
 }

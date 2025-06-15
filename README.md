@@ -1,8 +1,9 @@
 # Canonical JSON serialization for Rust
 
-![Build and Test](https://github.com/engineerd/cjson/workflows/Build%20and%20Test/badge.svg)
-[![docs.rs](https://docs.rs/cjson/badge.svg?version=0.1.1)](https://docs.rs/cjson/0.1.1/cjson/)
-[![Crates.io](https://img.shields.io/crates/v/cjson.svg)](https://crates.io/crates/cjson)
+This repository is forked from <https://github.com/engineerd/cjson> as it is unmaintained.
+
+[![docs.rs](https://docs.rs/cjson/badge.svg?version=0.1.1)](https://docs.rs/canon_json)
+[![Crates.io](https://img.shields.io/crates/v/cjson.svg)](https://crates.io/crates/canon_json)
 
 This is an implementation for a canonical JSON serializer that tries to be
 compliant with [the OLPC minimal specification for canonical JSON][olpc].
