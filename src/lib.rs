@@ -553,11 +553,35 @@ mod tests {
         assert_eq!(&buf, &expected);
     }
 
-    fn arbitrary_json(keyspace: &'static str) -> impl Strategy<Value = serde_json::Value> {
+    /// As it says, generate arbitrary JSON. This is based on
+    /// https://proptest-rs.github.io/proptest/proptest/tutorial/recursive.html
+    ///
+    /// We support controlling the regex for keys, and whether or not floating point values are emitted.
+    fn arbitrary_json(
+        keyspace: &'static str,
+        allow_fp: bool,
+    ) -> impl Strategy<Value = serde_json::Value> {
         use serde_json::Value;
         let leaf = prop_oneof![
             Just(Value::Null),
-            any::<u32>().prop_map(|v| Value::Number(Number::from_u128(v.into()).unwrap())),
+            any::<f64>().prop_filter_map("valid f64 for JSON", move |v| {
+                // Canonicalize zero
+                let n = if v.abs() == 0.0 {
+                    Number::from_u128(0).unwrap()
+                } else if allow_fp {
+                    Number::from_f64(v).unwrap()
+                } else {
+                    // Constrain to values clearly lower than
+                    // the https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+                    Number::from_u128(v as u32 as u128).unwrap()
+                };
+                let v = Value::Number(n);
+                if !v.is_f64() {
+                    None
+                } else {
+                    Some(v)
+                }
+            }),
             any::<bool>().prop_map(Value::Bool),
             keyspace.prop_map(Value::String),
         ];
@@ -578,7 +602,7 @@ mod tests {
 
     proptest! {
         #[test]
-        fn roundtrip_rfc8785(v in arbitrary_json(".*")) {
+        fn roundtrip_rfc8785(v in arbitrary_json(".*", true)) {
             let buf = encode!(&v).unwrap();
             let v2: serde_json::Value = serde_json::from_slice(&buf)
                 .map_err(|e| format!("Failed to parse {v:?} -> {}: {e}", String::from_utf8_lossy(&buf))).unwrap();
@@ -684,7 +708,7 @@ mod tests {
     proptest! {
         // Verify strict equivalency with printable ASCII only keys
         #[test]
-        fn crosscheck_olpc_cjson_ascii(v in arbitrary_json(ASCII_ALPHANUMERIC)) {
+        fn crosscheck_olpc_cjson_ascii(v in arbitrary_json(ASCII_ALPHANUMERIC, false)) {
             let canon_json = String::from_utf8(encode!(&v).unwrap()).unwrap();
             let mut olpc_cjson_serialized = Vec::new();
             let mut ser = serde_json::Serializer::with_formatter(&mut olpc_cjson_serialized, olpc_cjson::CanonicalFormatter::new());
@@ -696,7 +720,7 @@ mod tests {
     proptest! {
         // Verify strict equivalency with printable ASCII only keys
         #[test]
-        fn crosscheck_cjson_ascii(v in arbitrary_json(ASCII_ALPHANUMERIC)) {
+        fn crosscheck_cjson_ascii(v in arbitrary_json(ASCII_ALPHANUMERIC, false)) {
             let canon_json = String::from_utf8(encode!(&v).unwrap()).unwrap();
             let cjson = String::from_utf8(cjson::to_vec(&v).unwrap()).unwrap();
             assert_eq!(canon_json, cjson);
@@ -704,7 +728,7 @@ mod tests {
 
         // Verify equivalency (after sorting) with non-ASCII keys
         #[test]
-        fn crosscheck_cjson(v in arbitrary_json(".*")) {
+        fn crosscheck_cjson(v in arbitrary_json(".*", false)) {
             let buf = encode!(&v).unwrap();
             let self_reparsed = serde_json::from_slice::<serde_json::Value>(&buf).unwrap();
             let buf = cjson::to_vec(&v).unwrap();
