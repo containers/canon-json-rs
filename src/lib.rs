@@ -565,22 +565,14 @@ mod tests {
         let leaf = prop_oneof![
             Just(Value::Null),
             any::<f64>().prop_filter_map("valid f64 for JSON", move |v| {
-                // Canonicalize zero
-                let n = if v.abs() == 0.0 {
-                    Number::from_u128(0).unwrap()
-                } else if allow_fp {
+                let n = if allow_fp && v.fract() != 0.0 {
                     Number::from_f64(v).unwrap()
                 } else {
                     // Constrain to values clearly lower than
                     // the https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
                     Number::from_u128(v as u32 as u128).unwrap()
                 };
-                let v = Value::Number(n);
-                if !v.is_f64() {
-                    None
-                } else {
-                    Some(v)
-                }
+                Some(Value::Number(n))
             }),
             any::<bool>().prop_map(Value::Bool),
             keyspace.prop_map(Value::String),
