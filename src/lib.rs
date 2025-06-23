@@ -52,8 +52,11 @@ impl ObjectKey {
         let val = serde_json::Value::String(s);
         let mut s = Serializer::new(w);
         val.serialize(&mut s).map_err(|e| {
-            let kind = e.io_error_kind().unwrap();
-            Error::new(kind, "I/O error")
+            if let Some(kind) = e.io_error_kind() {
+                Error::new(kind, "I/O error")
+            } else {
+                Error::new(ErrorKind::Other, e.to_string())
+            }
         })
     }
 }
